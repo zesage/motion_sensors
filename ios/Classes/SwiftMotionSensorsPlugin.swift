@@ -37,7 +37,9 @@ class AccelerometerStreamHandler: NSObject, FlutterStreamHandler {
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         if motionManager.isAccelerometerAvailable {
             motionManager.startAccelerometerUpdates(to: queue) { (data, error) in
-                events([-data!.acceleration.x * GRAVITY, -data!.acceleration.y * GRAVITY, -data!.acceleration.z * GRAVITY]);
+                if data != nil {
+                    events([-data!.acceleration.x * GRAVITY, -data!.acceleration.y * GRAVITY, -data!.acceleration.z * GRAVITY]);
+                }
             }
         }
         return nil;
@@ -56,7 +58,9 @@ class UserAccelerometerStreamHandler: NSObject, FlutterStreamHandler {
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         if motionManager.isDeviceMotionAvailable {
             motionManager.startDeviceMotionUpdates(to: queue) { (data, error) in
-                events([-data!.userAcceleration.x * GRAVITY, -data!.userAcceleration.y * GRAVITY, -data!.userAcceleration.z * GRAVITY]);
+                if data != nil {
+                    events([-data!.userAcceleration.x * GRAVITY, -data!.userAcceleration.y * GRAVITY, -data!.userAcceleration.z * GRAVITY]);
+                }
             }
         }
         return nil;
@@ -75,7 +79,9 @@ class GyroscopeStreamHandler: NSObject, FlutterStreamHandler {
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         if motionManager.isGyroAvailable {
             motionManager.startGyroUpdates(to: queue) { (data, error) in
-                events([data!.rotationRate.x, data!.rotationRate.y, data!.rotationRate.z]);
+                if data != nil {
+                    events([data!.rotationRate.x, data!.rotationRate.y, data!.rotationRate.z]);
+                }
             }
         }
         return nil;
@@ -95,7 +101,9 @@ class MagnetometerStreamHandler: NSObject, FlutterStreamHandler {
         if motionManager.isDeviceMotionAvailable {
             motionManager.showsDeviceMovementDisplay = true;
             motionManager.startDeviceMotionUpdates(using: CMAttitudeReferenceFrame.xArbitraryCorrectedZVertical, to: queue) { (data, error) in
-                events([data!.magneticField.field.x, data!.magneticField.field.y, data!.magneticField.field.z]);
+                if data != nil {
+                    events([data!.magneticField.field.x, data!.magneticField.field.y, data!.magneticField.field.z]);
+                }
             }
         }
         return nil;
@@ -115,7 +123,9 @@ class AttitudeStreamHandler: NSObject, FlutterStreamHandler {
         if motionManager.isDeviceMotionAvailable {
             motionManager.showsDeviceMovementDisplay = true;
             motionManager.startDeviceMotionUpdates(using: CMAttitudeReferenceFrame.xMagneticNorthZVertical, to: queue) { (data, error) in
-                events([-data!.attitude.yaw, -data!.attitude.pitch, data!.attitude.roll]);
+                if data != nil {
+                    events([-data!.attitude.yaw, -data!.attitude.pitch, data!.attitude.roll]);
+                }
             }
         }
         return nil;
