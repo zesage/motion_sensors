@@ -184,6 +184,7 @@ class MotionSensors {
   Stream<MagnetometerEvent> _magnetometerEvents;
   Stream<OrientationEvent> _orientationEvents;
   Stream<AbsoluteOrientationEvent> _absoluteOrientationEvents;
+  OrientationEvent _initialOrientation;
 
   /// A broadcast stream of events from the device accelerometer.
   Stream<AccelerometerEvent> get accelerometer {
@@ -220,7 +221,13 @@ class MotionSensors {
   /// The current orientation of the device.
   Stream<OrientationEvent> get orientation {
     if (_orientationEvents == null) {
-      _orientationEvents = _orientationChannel.receiveBroadcastStream().map((dynamic event) => OrientationEvent.fromList(event.cast<double>()));
+      _orientationEvents = _orientationChannel.receiveBroadcastStream().map((dynamic event) {
+        var orientation = OrientationEvent.fromList(event.cast<double>());
+        _initialOrientation ??= orientation;
+        // Change the initial yaw of the orientation to zero
+        var yaw = (orientation.yaw + math.pi - _initialOrientation.yaw) % (math.pi * 2) - math.pi;
+        return OrientationEvent(yaw, orientation.pitch, orientation.roll);
+      });
     }
     return _orientationEvents;
   }
