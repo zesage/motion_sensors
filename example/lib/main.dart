@@ -17,6 +17,7 @@ class _MyAppState extends State<MyApp> {
   Vector3 _magnetometer = Vector3.zero();
   Vector3 _userAaccelerometer = Vector3.zero();
   Vector3 _orientation = Vector3.zero();
+  Vector3 _absoluteOrientation = Vector3.zero();
 
   @override
   void initState() {
@@ -44,6 +45,11 @@ class _MyAppState extends State<MyApp> {
     motionSensors.orientation.listen((OrientationEvent event) {
       setState(() {
         _orientation.setValues(event.yaw, event.pitch, event.roll);
+      });
+    });
+    motionSensors.absoluteOrientation.listen((AbsoluteOrientationEvent event) {
+      setState(() {
+        _absoluteOrientation.setValues(event.yaw, event.pitch, event.roll);
       });
     });
   }
@@ -101,6 +107,15 @@ class _MyAppState extends State<MyApp> {
                 Text('${degrees(_orientation.x).toStringAsFixed(4)}'),
                 Text('${degrees(_orientation.y).toStringAsFixed(4)}'),
                 Text('${degrees(_orientation.z).toStringAsFixed(4)}'),
+              ],
+            ),
+            Text('Absolute Orientation'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                Text('${degrees(_absoluteOrientation.x).toStringAsFixed(4)}'),
+                Text('${degrees(_absoluteOrientation.y).toStringAsFixed(4)}'),
+                Text('${degrees(_absoluteOrientation.z).toStringAsFixed(4)}'),
               ],
             ),
           ],

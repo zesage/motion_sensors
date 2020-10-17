@@ -5,15 +5,17 @@ import 'package:vector_math/vector_math_64.dart';
 
 final MotionSensors motionSensors = MotionSensors();
 
-const EventChannel _accelerometerEventChannel = EventChannel('final.dev/plugins/motion_sensors/accelerometer');
+const EventChannel _accelerometerEventChannel = EventChannel('motion_sensors/accelerometer');
 
-const EventChannel _userAccelerometerEventChannel = EventChannel('final.dev/plugins/motion_sensors/gyroscope');
+const EventChannel _userAccelerometerEventChannel = EventChannel('motion_sensors/gyroscope');
 
-const EventChannel _gyroscopeEventChannel = EventChannel('final.dev/plugins/motion_sensors/user_accel');
+const EventChannel _gyroscopeEventChannel = EventChannel('motion_sensors/user_accel');
 
-const EventChannel _magnetometerEventChannel = EventChannel('final.dev/plugins/motion_sensors/magnetometer');
+const EventChannel _magnetometerEventChannel = EventChannel('motion_sensors/magnetometer');
 
-const EventChannel _orientationChannel = EventChannel('final.dev/plugins/motion_sensors/orientation');
+const EventChannel _orientationChannel = EventChannel('motion_sensors/orientation');
+
+const EventChannel _absoluteOrientationChannel = EventChannel('motion_sensors/absolute_orientation');
 
 // from https://github.com/flutter/plugins/tree/master/packages/sensors
 /// Discrete reading from an accelerometer. Accelerometers measure the velocity
@@ -156,12 +158,32 @@ class OrientationEvent {
   String toString() => '[Orientation (yaw: $yaw, pitch: $pitch, roll: $roll)]';
 }
 
+class AbsoluteOrientationEvent {
+  AbsoluteOrientationEvent(this.yaw, this.pitch, this.roll);
+  AbsoluteOrientationEvent.fromList(List<double> list)
+      : yaw = list[0],
+        pitch = list[1],
+        roll = list[2];
+
+  /// The yaw of the device in radians.
+  final double yaw;
+
+  /// The pitch of the device in radians.
+  final double pitch;
+
+  /// The roll of the device in radians.
+  final double roll;
+  @override
+  String toString() => '[Orientation (yaw: $yaw, pitch: $pitch, roll: $roll)]';
+}
+
 class MotionSensors {
   Stream<AccelerometerEvent> _accelerometerEvents;
   Stream<GyroscopeEvent> _gyroscopeEvents;
   Stream<UserAccelerometerEvent> _userAccelerometerEvents;
   Stream<MagnetometerEvent> _magnetometerEvents;
   Stream<OrientationEvent> _orientationEvents;
+  Stream<AbsoluteOrientationEvent> _absoluteOrientationEvents;
 
   /// A broadcast stream of events from the device accelerometer.
   Stream<AccelerometerEvent> get accelerometer {
@@ -195,11 +217,20 @@ class MotionSensors {
     return _magnetometerEvents;
   }
 
+  /// The current orientation of the device.
   Stream<OrientationEvent> get orientation {
     if (_orientationEvents == null) {
       _orientationEvents = _orientationChannel.receiveBroadcastStream().map((dynamic event) => OrientationEvent.fromList(event.cast<double>()));
     }
     return _orientationEvents;
+  }
+
+  /// The current absolute orientation of the device.
+  Stream<AbsoluteOrientationEvent> get absoluteOrientation {
+    if (_absoluteOrientationEvents == null) {
+      _absoluteOrientationEvents = _absoluteOrientationChannel.receiveBroadcastStream().map((dynamic event) => AbsoluteOrientationEvent.fromList(event.cast<double>()));
+    }
+    return _absoluteOrientationEvents;
   }
 
   Matrix4 getRotationMatrix(Vector3 gravity, Vector3 geomagnetic) {

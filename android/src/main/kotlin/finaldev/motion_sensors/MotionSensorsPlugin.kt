@@ -14,17 +14,19 @@ import io.flutter.plugin.common.PluginRegistry.Registrar
 // translate from https://github.com/flutter/plugins/tree/master/packages/sensors
 /** MotionSensorsPlugin */
 public class MotionSensorsPlugin : FlutterPlugin {
-  private val ACCELEROMETER_CHANNEL_NAME = "final.dev/plugins/motion_sensors/accelerometer"
-  private val GYROSCOPE_CHANNEL_NAME = "final.dev/plugins/motion_sensors/gyroscope"
-  private val USER_ACCELEROMETER_CHANNEL_NAME = "final.dev/plugins/motion_sensors/user_accel"
-  private val MAGNETOMETER_CHANNEL_NAME = "final.dev/plugins/motion_sensors/magnetometer"
-  private val ORIENTATION_CHANNEL_NAME = "final.dev/plugins/motion_sensors/orientation"
+  private val ACCELEROMETER_CHANNEL_NAME = "motion_sensors/accelerometer"
+  private val GYROSCOPE_CHANNEL_NAME = "motion_sensors/gyroscope"
+  private val USER_ACCELEROMETER_CHANNEL_NAME = "motion_sensors/user_accel"
+  private val MAGNETOMETER_CHANNEL_NAME = "motion_sensors/magnetometer"
+  private val ORIENTATION_CHANNEL_NAME = "motion_sensors/orientation"
+  private val ABSOLUTE_ORIENTATION_CHANNEL_NAME = "motion_sensors/absolute_orientation"
 
   private var accelerometerChannel: EventChannel? = null
   private var userAccelChannel: EventChannel? = null
   private var gyroscopeChannel: EventChannel? = null
   private var magnetometerChannel: EventChannel? = null
   private var orientationChannel: EventChannel? = null
+  private var absoluteOrientationChannel: EventChannel? = null
 
   companion object {
     @JvmStatic
@@ -70,8 +72,16 @@ public class MotionSensorsPlugin : FlutterPlugin {
 
     orientationChannel = EventChannel(messenger, ORIENTATION_CHANNEL_NAME)
     val rotationVectorStreamHandler = RotationVectorStreamHandler(
-            (context.getSystemService(Context.SENSOR_SERVICE) as SensorManager))
+            (context.getSystemService(Context.SENSOR_SERVICE) as SensorManager),
+            Sensor.TYPE_GAME_ROTATION_VECTOR)
     orientationChannel!!.setStreamHandler(rotationVectorStreamHandler)
+
+    absoluteOrientationChannel = EventChannel(messenger, ABSOLUTE_ORIENTATION_CHANNEL_NAME)
+    val absoluteOrientationStreamHandler = RotationVectorStreamHandler(
+            (context.getSystemService(Context.SENSOR_SERVICE) as SensorManager),
+            Sensor.TYPE_ROTATION_VECTOR)
+    absoluteOrientationChannel!!.setStreamHandler(absoluteOrientationStreamHandler)
+
   }
 
   private fun teardownEventChannels() {
@@ -80,6 +90,7 @@ public class MotionSensorsPlugin : FlutterPlugin {
     gyroscopeChannel!!.setStreamHandler(null)
     magnetometerChannel!!.setStreamHandler(null)
     orientationChannel!!.setStreamHandler(null)
+    absoluteOrientationChannel!!.setStreamHandler(null)
   }
 }
 
@@ -109,13 +120,13 @@ class StreamHandlerImpl(private val sensorManager: SensorManager, private val se
   }
 }
 
-class RotationVectorStreamHandler(private val sensorManager: SensorManager) :
+class RotationVectorStreamHandler(private val sensorManager: SensorManager, private val sensorType: Int) :
         EventChannel.StreamHandler, SensorEventListener {
   private var eventSink: EventChannel.EventSink? = null
 
   override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
     eventSink = events
-    val sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+    val sensor = sensorManager.getDefaultSensor(sensorType)
     sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME)
   }
 
