@@ -246,9 +246,9 @@ class MotionSensors {
     Vector3 h = e.cross(a).normalized();
     Vector3 m = a.cross(h).normalized();
     return Matrix4(
-      h.x, h.y, h.z, 0, //
-      m.x, m.y, m.z, 0,
-      a.x, a.y, a.z, 0,
+      h.x, m.x, a.x, 0, //
+      h.y, m.y, a.y, 0,
+      h.z, m.z, a.z, 0,
       0, 0, 0, 1,
     );
   }
@@ -256,9 +256,9 @@ class MotionSensors {
   Vector3 getOrientation(Matrix4 m) {
     final r = m.storage;
     return Vector3(
-      math.atan2(r[1], r[5]),
-      math.asin(-r[9]),
-      math.atan2(-r[8], r[10]),
+      math.atan2(-r[4], r[5]),
+      math.asin(r[6]),
+      math.atan2(-r[2], r[10]),
     );
   }
 }

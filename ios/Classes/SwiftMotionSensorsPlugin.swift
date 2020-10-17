@@ -134,7 +134,7 @@ class AttitudeStreamHandler: NSObject, FlutterStreamHandler {
             motionManager.showsDeviceMovementDisplay = true;
             motionManager.startDeviceMotionUpdates(using: attitudeReferenceFrame, to: queue) { (data, error) in
                 if data != nil {
-                    events([-data!.attitude.yaw, -data!.attitude.pitch, data!.attitude.roll]);
+                    events([data!.attitude.yaw, data!.attitude.pitch, data!.attitude.roll]);
                 }
             }
         }
