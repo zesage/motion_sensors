@@ -4,17 +4,12 @@ import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 final MotionSensors motionSensors = MotionSensors();
-
+const MethodChannel _methodChannel = MethodChannel('motion_sensors/method');
 const EventChannel _accelerometerEventChannel = EventChannel('motion_sensors/accelerometer');
-
 const EventChannel _userAccelerometerEventChannel = EventChannel('motion_sensors/gyroscope');
-
 const EventChannel _gyroscopeEventChannel = EventChannel('motion_sensors/user_accel');
-
 const EventChannel _magnetometerEventChannel = EventChannel('motion_sensors/magnetometer');
-
 const EventChannel _orientationChannel = EventChannel('motion_sensors/orientation');
-
 const EventChannel _absoluteOrientationChannel = EventChannel('motion_sensors/absolute_orientation');
 
 // from https://github.com/flutter/plugins/tree/master/packages/sensors
@@ -185,6 +180,37 @@ class MotionSensors {
   Stream<OrientationEvent> _orientationEvents;
   Stream<AbsoluteOrientationEvent> _absoluteOrientationEvents;
   OrientationEvent _initialOrientation;
+
+  static const int TYPE_ACCELEROMETER = 1;
+  static const int TYPE_MAGNETIC_FIELD = 2;
+  static const int TYPE_GYROSCOPE = 4;
+  static const int TYPE_LINEAR_ACCELERATION = 1;
+  static const int TYPE_ORIENTATION = 15; //=TYPE_GAME_ROTATION_VECTOR
+  static const int TYPE_ABSOLUTE_ORIENTATION = 11; //=TYPE_ROTATION_VECTOR
+
+  /// Determines whether sensor is available.
+  Future<bool> isSensorAvailable(int sensorType) async {
+    final available = await _methodChannel.invokeMethod('isSensorAvailable', sensorType);
+    return available;
+  }
+
+  /// Determines whether accelerometer is available.
+  Future<bool> isAccelerometerAvailable() => isSensorAvailable(TYPE_ACCELEROMETER);
+
+  /// Determines whether linear accelerometer is available.
+  Future<bool> isLinearAccelerationAvailable() => isSensorAvailable(TYPE_LINEAR_ACCELERATION);
+
+  /// Determines whether magnetometer is available.
+  Future<bool> isMagnetometerAvailable() => isSensorAvailable(TYPE_MAGNETIC_FIELD);
+
+  /// Determines whether gyroscope is available.
+  Future<bool> isGyroscopeAvailable() => isSensorAvailable(TYPE_GYROSCOPE);
+
+  /// Determines whether orientation is available.
+  Future<bool> isOrientationAvailable() => isSensorAvailable(TYPE_ORIENTATION);
+
+  /// Determines whether absolute orientation is available.
+  Future<bool> isAbsoluteOrientationAvailable() => isSensorAvailable(TYPE_ABSOLUTE_ORIENTATION);
 
   /// A broadcast stream of events from the device accelerometer.
   Stream<AccelerometerEvent> get accelerometer {

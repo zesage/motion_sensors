@@ -42,10 +42,14 @@ class _MyAppState extends State<MyApp> {
         _magnetometer.setValues(event.x, event.y, event.z);
       });
     });
-    motionSensors.orientation.listen((OrientationEvent event) {
-      setState(() {
-        _orientation.setValues(event.yaw, event.pitch, event.roll);
-      });
+    motionSensors.isOrientationAvailable().then((available) {
+      if (available) {
+        motionSensors.orientation.listen((OrientationEvent event) {
+          setState(() {
+            _orientation.setValues(event.yaw, event.pitch, event.roll);
+          });
+        });
+      }
     });
     motionSensors.absoluteOrientation.listen((AbsoluteOrientationEvent event) {
       setState(() {

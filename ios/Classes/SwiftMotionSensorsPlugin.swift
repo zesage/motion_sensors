@@ -3,10 +3,21 @@ import UIKit
 import CoreMotion
 
 let GRAVITY = 9.8;
+let TYPE_ACCELEROMETER = 1
+let TYPE_MAGNETIC_FIELD = 2
+let TYPE_GYROSCOPE = 4
+let TYPE_ORIENTATION = 11
+let TYPE_ABSOLUTE_ORIENTATION = 15
+
 
 // translate from https://github.com/flutter/plugins/tree/master/packages/sensors
 public class SwiftMotionSensorsPlugin: NSObject, FlutterPlugin {
     public static func register(with registrar: FlutterPluginRegistrar) {
+        let METHOD_CHANNEL_NAME = "motion_sensors/method"
+        let instance = SwiftMotionSensorsPlugin()
+        let channel = FlutterMethodChannel(name: METHOD_CHANNEL_NAME, binaryMessenger: registrar.messenger())
+        registrar.addMethodCallDelegate(instance, channel: channel)
+
         let ACCELEROMETER_CHANNEL_NAME = "motion_sensors/accelerometer"
         let GYROSCOPE_CHANNEL_NAME = "motion_sensors/gyroscope"
         let USER_ACCELEROMETER_CHANNEL_NAME = "motion_sensors/user_accel"
@@ -32,6 +43,33 @@ public class SwiftMotionSensorsPlugin: NSObject, FlutterPlugin {
         let absoluteOrientationChannel = FlutterEventChannel(name: ABSOLUTE_ORIENTATION_CHANNEL_NAME, binaryMessenger: registrar.messenger())
         absoluteOrientationChannel.setStreamHandler(AttitudeStreamHandler(CMAttitudeReferenceFrame.xMagneticNorthZVertical))
 
+    }
+    
+    public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        switch call.method {
+        case "isSensorAvailable":
+            result(isSensorAvailable(call.arguments as! Int))
+        default:
+            result(FlutterMethodNotImplemented)
+        }
+    }
+    
+    public func isSensorAvailable(_ sensorType: Int) -> Bool {
+        let motionManager = CMMotionManager()
+        switch sensorType {
+        case TYPE_ACCELEROMETER:
+            return motionManager.isAccelerometerAvailable
+        case TYPE_MAGNETIC_FIELD:
+            return motionManager.isMagnetometerAvailable
+        case TYPE_GYROSCOPE:
+            return motionManager.isGyroAvailable
+        case TYPE_ORIENTATION:
+            return motionManager.isDeviceMotionAvailable
+        case TYPE_ABSOLUTE_ORIENTATION:
+            return motionManager.isDeviceMotionAvailable
+        default:
+            return false
+        }
     }
 }
 

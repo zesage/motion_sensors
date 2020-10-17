@@ -9,11 +9,14 @@ import androidx.annotation.NonNull;
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.EventChannel
+import io.flutter.plugin.common.MethodCall
+import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.PluginRegistry.Registrar
 
 // translate from https://github.com/flutter/plugins/tree/master/packages/sensors
 /** MotionSensorsPlugin */
-public class MotionSensorsPlugin : FlutterPlugin {
+public class MotionSensorsPlugin : FlutterPlugin, MethodChannel.MethodCallHandler {
+  private val METHOD_CHANNEL_NAME = "motion_sensors/method"
   private val ACCELEROMETER_CHANNEL_NAME = "motion_sensors/accelerometer"
   private val GYROSCOPE_CHANNEL_NAME = "motion_sensors/gyroscope"
   private val USER_ACCELEROMETER_CHANNEL_NAME = "motion_sensors/user_accel"
@@ -21,6 +24,8 @@ public class MotionSensorsPlugin : FlutterPlugin {
   private val ORIENTATION_CHANNEL_NAME = "motion_sensors/orientation"
   private val ABSOLUTE_ORIENTATION_CHANNEL_NAME = "motion_sensors/absolute_orientation"
 
+  private var sensorManager: SensorManager? = null
+  private var methodChannel: MethodChannel? = null
   private var accelerometerChannel: EventChannel? = null
   private var userAccelChannel: EventChannel? = null
   private var gyroscopeChannel: EventChannel? = null
@@ -45,46 +50,48 @@ public class MotionSensorsPlugin : FlutterPlugin {
     teardownEventChannels()
   }
 
+  override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+    when (call.method) {
+      "isSensorAvailable" -> result.success(sensorManager!!.getSensorList(call.arguments as Int).isNotEmpty())
+      else -> result.notImplemented()
+    }
+  }
+  
+
   private fun setupEventChannels(context: Context, messenger: BinaryMessenger) {
+    sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+
+    methodChannel = MethodChannel(messenger, METHOD_CHANNEL_NAME)
+    methodChannel!!.setMethodCallHandler(this)
+
     accelerometerChannel = EventChannel(messenger, ACCELEROMETER_CHANNEL_NAME)
-    val accelerationStreamHandler = StreamHandlerImpl(
-            (context.getSystemService(Context.SENSOR_SERVICE) as SensorManager),
-            Sensor.TYPE_ACCELEROMETER)
+    val accelerationStreamHandler = StreamHandlerImpl(sensorManager!!, Sensor.TYPE_ACCELEROMETER)
     accelerometerChannel!!.setStreamHandler(accelerationStreamHandler)
 
     userAccelChannel = EventChannel(messenger, USER_ACCELEROMETER_CHANNEL_NAME)
-    val linearAccelerationStreamHandler = StreamHandlerImpl(
-            (context.getSystemService(Context.SENSOR_SERVICE) as SensorManager),
-            Sensor.TYPE_LINEAR_ACCELERATION)
+    val linearAccelerationStreamHandler = StreamHandlerImpl(sensorManager!!, Sensor.TYPE_LINEAR_ACCELERATION)
     userAccelChannel!!.setStreamHandler(linearAccelerationStreamHandler)
 
     gyroscopeChannel = EventChannel(messenger, GYROSCOPE_CHANNEL_NAME)
-    val gyroScopeStreamHandler = StreamHandlerImpl(
-            (context.getSystemService(Context.SENSOR_SERVICE) as SensorManager),
-            Sensor.TYPE_GYROSCOPE)
+    val gyroScopeStreamHandler = StreamHandlerImpl(sensorManager!!, Sensor.TYPE_GYROSCOPE)
     gyroscopeChannel!!.setStreamHandler(gyroScopeStreamHandler)
 
     magnetometerChannel = EventChannel(messenger, MAGNETOMETER_CHANNEL_NAME)
-    val magnetometerStreamHandler = StreamHandlerImpl(
-            (context.getSystemService(Context.SENSOR_SERVICE) as SensorManager),
-            Sensor.TYPE_MAGNETIC_FIELD)
+    val magnetometerStreamHandler = StreamHandlerImpl(sensorManager!!, Sensor.TYPE_MAGNETIC_FIELD)
     magnetometerChannel!!.setStreamHandler(magnetometerStreamHandler)
 
     orientationChannel = EventChannel(messenger, ORIENTATION_CHANNEL_NAME)
-    val rotationVectorStreamHandler = RotationVectorStreamHandler(
-            (context.getSystemService(Context.SENSOR_SERVICE) as SensorManager),
-            Sensor.TYPE_GAME_ROTATION_VECTOR)
+    val rotationVectorStreamHandler = RotationVectorStreamHandler(sensorManager!!, Sensor.TYPE_GAME_ROTATION_VECTOR)
     orientationChannel!!.setStreamHandler(rotationVectorStreamHandler)
 
     absoluteOrientationChannel = EventChannel(messenger, ABSOLUTE_ORIENTATION_CHANNEL_NAME)
-    val absoluteOrientationStreamHandler = RotationVectorStreamHandler(
-            (context.getSystemService(Context.SENSOR_SERVICE) as SensorManager),
-            Sensor.TYPE_ROTATION_VECTOR)
+    val absoluteOrientationStreamHandler = RotationVectorStreamHandler(sensorManager!!, Sensor.TYPE_ROTATION_VECTOR)
     absoluteOrientationChannel!!.setStreamHandler(absoluteOrientationStreamHandler)
 
   }
 
   private fun teardownEventChannels() {
+    methodChannel!!.setMethodCallHandler(null)
     accelerometerChannel!!.setStreamHandler(null)
     userAccelChannel!!.setStreamHandler(null)
     gyroscopeChannel!!.setStreamHandler(null)
