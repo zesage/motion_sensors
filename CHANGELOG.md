@@ -1,3 +1,7 @@
+## 0.0.3
+
+* add update interval
+
 ## 0.0.2
 
 * add absoluteOrientation
