@@ -223,7 +223,13 @@ class AttitudeStreamHandler: NSObject, FlutterStreamHandler {
             motionManager.showsDeviceMovementDisplay = true
             motionManager.startDeviceMotionUpdates(using: attitudeReferenceFrame, to: queue) { (data, error) in
                 if data != nil {
-                    events([data!.attitude.yaw, data!.attitude.pitch, data!.attitude.roll])
+                    // Let the y-axis point to magnetic north instead of the x-axis
+                    if self.attitudeReferenceFrame == CMAttitudeReferenceFrame.xMagneticNorthZVertical {
+                        let yaw = (data!.attitude.yaw + Double.pi + Double.pi / 2).truncatingRemainder(dividingBy: Double.pi * 2) - Double.pi
+                        events([yaw, data!.attitude.pitch, data!.attitude.roll])
+                    } else {
+                        events([data!.attitude.yaw, data!.attitude.pitch, data!.attitude.roll])
+                    }
                 }
             }
         }
