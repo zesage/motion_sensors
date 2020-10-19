@@ -2,53 +2,66 @@ import Flutter
 import UIKit
 import CoreMotion
 
-let GRAVITY = 9.8;
+let GRAVITY = 9.8
 let TYPE_ACCELEROMETER = 1
 let TYPE_MAGNETIC_FIELD = 2
 let TYPE_GYROSCOPE = 4
+let TYPE_USER_ACCELEROMETER = 10
 let TYPE_ORIENTATION = 11
 let TYPE_ABSOLUTE_ORIENTATION = 15
 
 
 // translate from https://github.com/flutter/plugins/tree/master/packages/sensors
 public class SwiftMotionSensorsPlugin: NSObject, FlutterPlugin {
+    private let accelerometerStreamHandler = AccelerometerStreamHandler()
+    private let magnetometerStreamHandler = MagnetometerStreamHandler()
+    private let gyroscopeStreamHandler = GyroscopeStreamHandler()
+    private let userAccelerometerStreamHandler = UserAccelerometerStreamHandler()
+    private let orientationStreamHandler = AttitudeStreamHandler(CMAttitudeReferenceFrame.xArbitraryCorrectedZVertical)
+    private let absoluteOrientationStreamHandler = AttitudeStreamHandler(CMAttitudeReferenceFrame.xMagneticNorthZVertical)
+    
     public static func register(with registrar: FlutterPluginRegistrar) {
         let METHOD_CHANNEL_NAME = "motion_sensors/method"
-        let instance = SwiftMotionSensorsPlugin()
+        let instance = SwiftMotionSensorsPlugin(registrar: registrar)
         let channel = FlutterMethodChannel(name: METHOD_CHANNEL_NAME, binaryMessenger: registrar.messenger())
         registrar.addMethodCallDelegate(instance, channel: channel)
 
+    }
+    
+    init(registrar: FlutterPluginRegistrar) {
         let ACCELEROMETER_CHANNEL_NAME = "motion_sensors/accelerometer"
-        let GYROSCOPE_CHANNEL_NAME = "motion_sensors/gyroscope"
-        let USER_ACCELEROMETER_CHANNEL_NAME = "motion_sensors/user_accel"
         let MAGNETOMETER_CHANNEL_NAME = "motion_sensors/magnetometer"
+        let GYROSCOPE_CHANNEL_NAME = "motion_sensors/gyroscope"
+        let USER_ACCELEROMETER_CHANNEL_NAME = "motion_sensors/user_accelerometer"
         let ORIENTATION_CHANNEL_NAME = "motion_sensors/orientation"
         let ABSOLUTE_ORIENTATION_CHANNEL_NAME = "motion_sensors/absolute_orientation"
 
-        let accelerometerChannel = FlutterEventChannel(name: ACCELEROMETER_CHANNEL_NAME, binaryMessenger: registrar.messenger());
-        accelerometerChannel.setStreamHandler(AccelerometerStreamHandler());
+        let accelerometerChannel = FlutterEventChannel(name: ACCELEROMETER_CHANNEL_NAME, binaryMessenger: registrar.messenger())
+        accelerometerChannel.setStreamHandler(accelerometerStreamHandler)
         
-        let userAccelerometerChannel = FlutterEventChannel(name: USER_ACCELEROMETER_CHANNEL_NAME, binaryMessenger: registrar.messenger());
-        userAccelerometerChannel.setStreamHandler(UserAccelerometerStreamHandler());
+        let magnetometerChannel = FlutterEventChannel(name: MAGNETOMETER_CHANNEL_NAME, binaryMessenger: registrar.messenger())
+        magnetometerChannel.setStreamHandler(magnetometerStreamHandler)
         
-        let gyroscopeChannel = FlutterEventChannel(name: GYROSCOPE_CHANNEL_NAME, binaryMessenger: registrar.messenger());
-        gyroscopeChannel.setStreamHandler(GyroscopeStreamHandler());
+        let gyroscopeChannel = FlutterEventChannel(name: GYROSCOPE_CHANNEL_NAME, binaryMessenger: registrar.messenger())
+        gyroscopeChannel.setStreamHandler(gyroscopeStreamHandler)
         
-        let magnetometerChannel = FlutterEventChannel(name: MAGNETOMETER_CHANNEL_NAME, binaryMessenger: registrar.messenger());
-        magnetometerChannel.setStreamHandler(MagnetometerStreamHandler());
+        let userAccelerometerChannel = FlutterEventChannel(name: USER_ACCELEROMETER_CHANNEL_NAME, binaryMessenger: registrar.messenger())
+        userAccelerometerChannel.setStreamHandler(userAccelerometerStreamHandler)
         
         let orientationChannel = FlutterEventChannel(name: ORIENTATION_CHANNEL_NAME, binaryMessenger: registrar.messenger())
-        orientationChannel.setStreamHandler(AttitudeStreamHandler(CMAttitudeReferenceFrame.xArbitraryCorrectedZVertical))
+        orientationChannel.setStreamHandler(orientationStreamHandler)
 
         let absoluteOrientationChannel = FlutterEventChannel(name: ABSOLUTE_ORIENTATION_CHANNEL_NAME, binaryMessenger: registrar.messenger())
-        absoluteOrientationChannel.setStreamHandler(AttitudeStreamHandler(CMAttitudeReferenceFrame.xMagneticNorthZVertical))
-
+        absoluteOrientationChannel.setStreamHandler(absoluteOrientationStreamHandler)
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         switch call.method {
         case "isSensorAvailable":
             result(isSensorAvailable(call.arguments as! Int))
+        case "setSensorUpdateInterval":
+            let arguments = call.arguments as! NSDictionary
+            setSensorUpdateInterval(arguments["sensorType"] as! Int, arguments["interval"] as! Int)
         default:
             result(FlutterMethodNotImplemented)
         }
@@ -63,6 +76,8 @@ public class SwiftMotionSensorsPlugin: NSObject, FlutterPlugin {
             return motionManager.isMagnetometerAvailable
         case TYPE_GYROSCOPE:
             return motionManager.isGyroAvailable
+        case TYPE_USER_ACCELEROMETER:
+            return motionManager.isDeviceMotionAvailable
         case TYPE_ORIENTATION:
             return motionManager.isDeviceMotionAvailable
         case TYPE_ABSOLUTE_ORIENTATION:
@@ -71,97 +86,133 @@ public class SwiftMotionSensorsPlugin: NSObject, FlutterPlugin {
             return false
         }
     }
+    
+    public func setSensorUpdateInterval(_ sensorType: Int, _ interval: Int) {
+        let timeInterval = TimeInterval(Double(interval) / 1000000.0)
+        switch sensorType {
+        case TYPE_ACCELEROMETER:
+            accelerometerStreamHandler.setUpdateInterval(timeInterval)
+        case TYPE_MAGNETIC_FIELD:
+            magnetometerStreamHandler.setUpdateInterval(timeInterval)
+        case TYPE_GYROSCOPE:
+            gyroscopeStreamHandler.setUpdateInterval(timeInterval)
+        case TYPE_USER_ACCELEROMETER:
+            userAccelerometerStreamHandler.setUpdateInterval(timeInterval)
+        case TYPE_ORIENTATION:
+            orientationStreamHandler.setUpdateInterval(timeInterval)
+        case TYPE_ABSOLUTE_ORIENTATION:
+            absoluteOrientationStreamHandler.setUpdateInterval(timeInterval)
+        default:
+            break
+        }
+    }
 }
 
 class AccelerometerStreamHandler: NSObject, FlutterStreamHandler {
-    private let motionManager = CMMotionManager();
-    private let queue = OperationQueue();
+    private let motionManager = CMMotionManager()
+    private let queue = OperationQueue()
     
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         if motionManager.isAccelerometerAvailable {
             motionManager.startAccelerometerUpdates(to: queue) { (data, error) in
                 if data != nil {
-                    events([-data!.acceleration.x * GRAVITY, -data!.acceleration.y * GRAVITY, -data!.acceleration.z * GRAVITY]);
+                    events([-data!.acceleration.x * GRAVITY, -data!.acceleration.y * GRAVITY, -data!.acceleration.z * GRAVITY])
                 }
             }
         }
-        return nil;
+        return nil
     }
     
     func onCancel(withArguments arguments: Any?) -> FlutterError? {
-        motionManager.stopAccelerometerUpdates();
-        return nil;
+        motionManager.stopAccelerometerUpdates()
+        return nil
+    }
+    
+    func setUpdateInterval(_ interval: TimeInterval) {
+        motionManager.accelerometerUpdateInterval = interval
     }
 }
 
 class UserAccelerometerStreamHandler: NSObject, FlutterStreamHandler {
-    private let motionManager = CMMotionManager();
-    private let queue = OperationQueue();
+    private let motionManager = CMMotionManager()
+    private let queue = OperationQueue()
     
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         if motionManager.isDeviceMotionAvailable {
             motionManager.startDeviceMotionUpdates(to: queue) { (data, error) in
                 if data != nil {
-                    events([-data!.userAcceleration.x * GRAVITY, -data!.userAcceleration.y * GRAVITY, -data!.userAcceleration.z * GRAVITY]);
+                    events([-data!.userAcceleration.x * GRAVITY, -data!.userAcceleration.y * GRAVITY, -data!.userAcceleration.z * GRAVITY])
                 }
             }
         }
-        return nil;
+        return nil
     }
     
     func onCancel(withArguments arguments: Any?) -> FlutterError? {
-        motionManager.stopDeviceMotionUpdates();
-        return nil;
+        motionManager.stopDeviceMotionUpdates()
+        return nil
+    }
+
+    func setUpdateInterval(_ interval: TimeInterval) {
+        motionManager.deviceMotionUpdateInterval = interval
     }
 }
 
 class GyroscopeStreamHandler: NSObject, FlutterStreamHandler {
-    private let motionManager = CMMotionManager();
-    private let queue = OperationQueue();
+    private let motionManager = CMMotionManager()
+    private let queue = OperationQueue()
     
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         if motionManager.isGyroAvailable {
             motionManager.startGyroUpdates(to: queue) { (data, error) in
                 if data != nil {
-                    events([data!.rotationRate.x, data!.rotationRate.y, data!.rotationRate.z]);
+                    events([data!.rotationRate.x, data!.rotationRate.y, data!.rotationRate.z])
                 }
             }
         }
-        return nil;
+        return nil
     }
     
     func onCancel(withArguments arguments: Any?) -> FlutterError? {
-        motionManager.stopGyroUpdates();
-        return nil;
+        motionManager.stopGyroUpdates()
+        return nil
+    }
+    
+    func setUpdateInterval(_ interval: TimeInterval) {
+        motionManager.gyroUpdateInterval = interval
     }
 }
 
 class MagnetometerStreamHandler: NSObject, FlutterStreamHandler {
-    private let motionManager = CMMotionManager();
-    private let queue = OperationQueue();
+    private let motionManager = CMMotionManager()
+    private let queue = OperationQueue()
     
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         if motionManager.isDeviceMotionAvailable {
-            motionManager.showsDeviceMovementDisplay = true;
+            motionManager.showsDeviceMovementDisplay = true
             motionManager.startDeviceMotionUpdates(using: CMAttitudeReferenceFrame.xArbitraryCorrectedZVertical, to: queue) { (data, error) in
                 if data != nil {
-                    events([data!.magneticField.field.x, data!.magneticField.field.y, data!.magneticField.field.z]);
+                    events([data!.magneticField.field.x, data!.magneticField.field.y, data!.magneticField.field.z])
                 }
             }
         }
-        return nil;
+        return nil
     }
     
     func onCancel(withArguments arguments: Any?) -> FlutterError? {
         motionManager.stopDeviceMotionUpdates()
-        return nil;
+        return nil
+    }
+    
+    func setUpdateInterval(_ interval: TimeInterval) {
+        motionManager.deviceMotionUpdateInterval = interval
     }
 }
 
 class AttitudeStreamHandler: NSObject, FlutterStreamHandler {
     private var attitudeReferenceFrame:  CMAttitudeReferenceFrame
-    private let motionManager = CMMotionManager();
-    private let queue = OperationQueue();
+    private let motionManager = CMMotionManager()
+    private let queue = OperationQueue()
 
     init(_ referenceFrame: CMAttitudeReferenceFrame) {
         attitudeReferenceFrame = referenceFrame
@@ -169,18 +220,22 @@ class AttitudeStreamHandler: NSObject, FlutterStreamHandler {
 
     func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
         if motionManager.isDeviceMotionAvailable {
-            motionManager.showsDeviceMovementDisplay = true;
+            motionManager.showsDeviceMovementDisplay = true
             motionManager.startDeviceMotionUpdates(using: attitudeReferenceFrame, to: queue) { (data, error) in
                 if data != nil {
-                    events([data!.attitude.yaw, data!.attitude.pitch, data!.attitude.roll]);
+                    events([data!.attitude.yaw, data!.attitude.pitch, data!.attitude.roll])
                 }
             }
         }
-        return nil;
+        return nil
     }
     
     func onCancel(withArguments arguments: Any?) -> FlutterError? {
         motionManager.stopDeviceMotionUpdates()
-        return nil;
+        return nil
+    }
+    
+    func setUpdateInterval(_ interval: TimeInterval) {
+        motionManager.deviceMotionUpdateInterval = interval
     }
 }

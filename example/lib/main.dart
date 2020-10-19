@@ -18,6 +18,7 @@ class _MyAppState extends State<MyApp> {
   Vector3 _userAaccelerometer = Vector3.zero();
   Vector3 _orientation = Vector3.zero();
   Vector3 _absoluteOrientation = Vector3.zero();
+  int _groupValue = 0;
 
   @override
   void initState() {
@@ -58,6 +59,18 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  void setUpdateInterval(int groupValue, int interval) {
+    motionSensors.accelerometerUpdateInterval = interval;
+    motionSensors.userAccelerometerUpdateInterval = interval;
+    motionSensors.gyroscopeUpdateInterval = interval;
+    motionSensors.magnetometerUpdateInterval = interval;
+    motionSensors.orientationUpdateInterval = interval;
+    motionSensors.absoluteOrientationUpdateInterval = interval;
+    setState(() {
+      _groupValue = groupValue;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -68,25 +81,31 @@ class _MyAppState extends State<MyApp> {
         body: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text('magnetometer'),
+            Text('Update Interval'),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                Text('${_magnetometer.x.toStringAsFixed(4)}'),
-                Text('${_magnetometer.y.toStringAsFixed(4)}'),
-                Text('${_magnetometer.z.toStringAsFixed(4)}'),
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Radio(
+                  value: 1,
+                  groupValue: _groupValue,
+                  onChanged: (value) => setUpdateInterval(value, Duration.microsecondsPerSecond ~/ 1),
+                ),
+                Text("1 FPS"),
+                Radio(
+                  value: 2,
+                  groupValue: _groupValue,
+                  onChanged: (value) => setUpdateInterval(value, Duration.microsecondsPerSecond ~/ 30),
+                ),
+                Text("30 FPS"),
+                Radio(
+                  value: 3,
+                  groupValue: _groupValue,
+                  onChanged: (value) => setUpdateInterval(value, Duration.microsecondsPerSecond ~/ 60),
+                ),
+                Text("60 FPS"),
               ],
             ),
-            Text('gyroscope'),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                Text('${_gyroscope.x.toStringAsFixed(4)}'),
-                Text('${_gyroscope.y.toStringAsFixed(4)}'),
-                Text('${_gyroscope.z.toStringAsFixed(4)}'),
-              ],
-            ),
-            Text('accelerometer'),
+            Text('Accelerometer'),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
@@ -95,7 +114,25 @@ class _MyAppState extends State<MyApp> {
                 Text('${_accelerometer.z.toStringAsFixed(4)}'),
               ],
             ),
-            Text('userAccelerometer'),
+            Text('Magnetometer'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                Text('${_magnetometer.x.toStringAsFixed(4)}'),
+                Text('${_magnetometer.y.toStringAsFixed(4)}'),
+                Text('${_magnetometer.z.toStringAsFixed(4)}'),
+              ],
+            ),
+            Text('Gyroscope'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                Text('${_gyroscope.x.toStringAsFixed(4)}'),
+                Text('${_gyroscope.y.toStringAsFixed(4)}'),
+                Text('${_gyroscope.z.toStringAsFixed(4)}'),
+              ],
+            ),
+            Text('User Accelerometer'),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[

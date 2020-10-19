@@ -6,9 +6,9 @@ import 'package:vector_math/vector_math_64.dart';
 final MotionSensors motionSensors = MotionSensors();
 const MethodChannel _methodChannel = MethodChannel('motion_sensors/method');
 const EventChannel _accelerometerEventChannel = EventChannel('motion_sensors/accelerometer');
-const EventChannel _userAccelerometerEventChannel = EventChannel('motion_sensors/gyroscope');
-const EventChannel _gyroscopeEventChannel = EventChannel('motion_sensors/user_accel');
+const EventChannel _gyroscopeEventChannel = EventChannel('motion_sensors/gyroscope');
 const EventChannel _magnetometerEventChannel = EventChannel('motion_sensors/magnetometer');
+const EventChannel _userAccelerometerEventChannel = EventChannel('motion_sensors/user_accelerometer');
 const EventChannel _orientationChannel = EventChannel('motion_sensors/orientation');
 const EventChannel _absoluteOrientationChannel = EventChannel('motion_sensors/absolute_orientation');
 
@@ -47,6 +47,20 @@ class AccelerometerEvent {
 
   @override
   String toString() => '[AccelerometerEvent (x: $x, y: $y, z: $z)]';
+}
+
+class MagnetometerEvent {
+  MagnetometerEvent(this.x, this.y, this.z);
+  MagnetometerEvent.fromList(List<double> list)
+      : x = list[0],
+        y = list[1],
+        z = list[2];
+
+  final double x;
+  final double y;
+  final double z;
+  @override
+  String toString() => '[Magnetometer (x: $x, y: $y, z: $z)]';
 }
 
 /// Discrete reading from a gyroscope. Gyroscopes measure the rate or rotation of
@@ -120,20 +134,6 @@ class UserAccelerometerEvent {
   String toString() => '[UserAccelerometerEvent (x: $x, y: $y, z: $z)]';
 }
 
-class MagnetometerEvent {
-  MagnetometerEvent(this.x, this.y, this.z);
-  MagnetometerEvent.fromList(List<double> list)
-      : x = list[0],
-        y = list[1],
-        z = list[2];
-
-  final double x;
-  final double y;
-  final double z;
-  @override
-  String toString() => '[Magnetometer (x: $x, y: $y, z: $z)]';
-}
-
 class OrientationEvent {
   OrientationEvent(this.yaw, this.pitch, this.roll);
   OrientationEvent.fromList(List<double> list)
@@ -184,7 +184,7 @@ class MotionSensors {
   static const int TYPE_ACCELEROMETER = 1;
   static const int TYPE_MAGNETIC_FIELD = 2;
   static const int TYPE_GYROSCOPE = 4;
-  static const int TYPE_LINEAR_ACCELERATION = 1;
+  static const int TYPE_USER_ACCELEROMETER = 10;
   static const int TYPE_ORIENTATION = 15; //=TYPE_GAME_ROTATION_VECTOR
   static const int TYPE_ABSOLUTE_ORIENTATION = 11; //=TYPE_ROTATION_VECTOR
 
@@ -197,20 +197,43 @@ class MotionSensors {
   /// Determines whether accelerometer is available.
   Future<bool> isAccelerometerAvailable() => isSensorAvailable(TYPE_ACCELEROMETER);
 
-  /// Determines whether linear accelerometer is available.
-  Future<bool> isLinearAccelerationAvailable() => isSensorAvailable(TYPE_LINEAR_ACCELERATION);
-
   /// Determines whether magnetometer is available.
   Future<bool> isMagnetometerAvailable() => isSensorAvailable(TYPE_MAGNETIC_FIELD);
 
   /// Determines whether gyroscope is available.
   Future<bool> isGyroscopeAvailable() => isSensorAvailable(TYPE_GYROSCOPE);
 
+  /// Determines whether user accelerometer is available.
+  Future<bool> isUserAccelerationAvailable() => isSensorAvailable(TYPE_USER_ACCELEROMETER);
+
   /// Determines whether orientation is available.
   Future<bool> isOrientationAvailable() => isSensorAvailable(TYPE_ORIENTATION);
 
   /// Determines whether absolute orientation is available.
   Future<bool> isAbsoluteOrientationAvailable() => isSensorAvailable(TYPE_ABSOLUTE_ORIENTATION);
+
+  /// Change the update interval of sensor. The units are in microseconds.
+  Future setSensorUpdateInterval(int sensorType, int interval) async {
+    await _methodChannel.invokeMethod('setSensorUpdateInterval', {"sensorType": sensorType, "interval": interval});
+  }
+
+  /// The update interval of accelerometer. The units are in microseconds.
+  set accelerometerUpdateInterval(int interval) => setSensorUpdateInterval(TYPE_ACCELEROMETER, interval);
+
+  /// The update interval of magnetometer. The units are in microseconds.
+  set magnetometerUpdateInterval(int interval) => setSensorUpdateInterval(TYPE_MAGNETIC_FIELD, interval);
+
+  /// The update interval of Gyroscope. The units are in microseconds.
+  set gyroscopeUpdateInterval(int interval) => setSensorUpdateInterval(TYPE_GYROSCOPE, interval);
+
+  /// The update interval of user accelerometer. The units are in microseconds.
+  set userAccelerometerUpdateInterval(int interval) => setSensorUpdateInterval(TYPE_USER_ACCELEROMETER, interval);
+
+  /// The update interval of orientation. The units are in microseconds.
+  set orientationUpdateInterval(int interval) => setSensorUpdateInterval(TYPE_ORIENTATION, interval);
+
+  /// The update interval of absolute orientation. The units are in microseconds.
+  set absoluteOrientationUpdateInterval(int interval) => setSensorUpdateInterval(TYPE_ABSOLUTE_ORIENTATION, interval);
 
   /// A broadcast stream of events from the device accelerometer.
   Stream<AccelerometerEvent> get accelerometer {
