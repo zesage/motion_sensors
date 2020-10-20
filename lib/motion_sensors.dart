@@ -11,6 +11,7 @@ const EventChannel _magnetometerEventChannel = EventChannel('motion_sensors/magn
 const EventChannel _userAccelerometerEventChannel = EventChannel('motion_sensors/user_accelerometer');
 const EventChannel _orientationChannel = EventChannel('motion_sensors/orientation');
 const EventChannel _absoluteOrientationChannel = EventChannel('motion_sensors/absolute_orientation');
+const EventChannel _screenOrientationChannel = EventChannel('motion_sensors/screen_orientation');
 
 // from https://github.com/flutter/plugins/tree/master/packages/sensors
 /// Discrete reading from an accelerometer. Accelerometers measure the velocity
@@ -172,6 +173,16 @@ class AbsoluteOrientationEvent {
   String toString() => '[Orientation (yaw: $yaw, pitch: $pitch, roll: $roll)]';
 }
 
+class ScreenOrientationEvent {
+  ScreenOrientationEvent(this.angle);
+
+  /// The screen's current orientation angle. The angle may be 0, 90, 180, -90 degrees
+  final double angle;
+
+  @override
+  String toString() => '[ScreenOrientation (angle: $angle)]';
+}
+
 class MotionSensors {
   Stream<AccelerometerEvent> _accelerometerEvents;
   Stream<GyroscopeEvent> _gyroscopeEvents;
@@ -179,6 +190,7 @@ class MotionSensors {
   Stream<MagnetometerEvent> _magnetometerEvents;
   Stream<OrientationEvent> _orientationEvents;
   Stream<AbsoluteOrientationEvent> _absoluteOrientationEvents;
+  Stream<ScreenOrientationEvent> _screenOrientationEvents;
   OrientationEvent _initialOrientation;
 
   static const int TYPE_ACCELEROMETER = 1;
@@ -287,6 +299,14 @@ class MotionSensors {
       _absoluteOrientationEvents = _absoluteOrientationChannel.receiveBroadcastStream().map((dynamic event) => AbsoluteOrientationEvent.fromList(event.cast<double>()));
     }
     return _absoluteOrientationEvents;
+  }
+
+  /// The rotation of the screen from its "natural" orientation.
+  Stream<ScreenOrientationEvent> get screenOrientation {
+    if (_screenOrientationEvents == null) {
+      _screenOrientationEvents = _screenOrientationChannel.receiveBroadcastStream().map((dynamic event) => ScreenOrientationEvent(event as double));
+    }
+    return _screenOrientationEvents;
   }
 
   Matrix4 getRotationMatrix(Vector3 gravity, Vector3 geomagnetic) {

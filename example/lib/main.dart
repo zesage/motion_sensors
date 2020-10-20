@@ -18,6 +18,8 @@ class _MyAppState extends State<MyApp> {
   Vector3 _userAaccelerometer = Vector3.zero();
   Vector3 _orientation = Vector3.zero();
   Vector3 _absoluteOrientation = Vector3.zero();
+  double _screenOrientation = 0;
+
   int _groupValue = 0;
 
   @override
@@ -55,6 +57,11 @@ class _MyAppState extends State<MyApp> {
     motionSensors.absoluteOrientation.listen((AbsoluteOrientationEvent event) {
       setState(() {
         _absoluteOrientation.setValues(event.yaw, event.pitch, event.roll);
+      });
+    });
+    motionSensors.screenOrientation.listen((ScreenOrientationEvent event) {
+      setState(() {
+        _screenOrientation = event.angle;
       });
     });
   }
@@ -157,6 +164,13 @@ class _MyAppState extends State<MyApp> {
                 Text('${degrees(_absoluteOrientation.x).toStringAsFixed(4)}'),
                 Text('${degrees(_absoluteOrientation.y).toStringAsFixed(4)}'),
                 Text('${degrees(_absoluteOrientation.z).toStringAsFixed(4)}'),
+              ],
+            ),
+            Text('Screen Orientation'),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                Text('${_screenOrientation.toStringAsFixed(4)}'),
               ],
             ),
           ],
