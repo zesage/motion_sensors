@@ -15,3 +15,7 @@ motionSensors.magnetometer.listen((MagnetometerEvent event) {
 });
 
 ```
+
+## Screenshot
+
+![screenshot](https://github.com/zesage/motion_sensors/raw/master/screenshot.png)

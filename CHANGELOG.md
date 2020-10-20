@@ -1,3 +1,7 @@
+## 0.0.4
+
+* add screen orientation
+
 ## 0.0.3
 
 * add update interval
