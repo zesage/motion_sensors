@@ -1,3 +1,7 @@
+## 0.0.5
+
+* fixed getOrientation return NaN value
+
 ## 0.0.4
 
 * add screen orientation
