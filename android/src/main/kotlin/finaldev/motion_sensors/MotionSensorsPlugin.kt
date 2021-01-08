@@ -189,6 +189,8 @@ class RotationVectorStreamHandler(private val sensorManager: SensorManager, sens
   override fun onSensorChanged(event: SensorEvent?) {
     var matrix = FloatArray(9)
     SensorManager.getRotationMatrixFromVector(matrix, event!!.values)
+    if (matrix[7] > 1.0f) matrix[7] = 1.0f
+    if (matrix[7] < -1.0f) matrix[7] = -1.0f
     var orientation = FloatArray(3)
     SensorManager.getOrientation(matrix, orientation)
     val sensorValues = listOf(-orientation[0], -orientation[1], orientation[2])
