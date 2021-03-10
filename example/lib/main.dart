@@ -18,55 +18,55 @@ class _MyAppState extends State<MyApp> {
   Vector3 _userAaccelerometer = Vector3.zero();
   Vector3 _orientation = Vector3.zero();
   Vector3 _absoluteOrientation = Vector3.zero();
-  double _screenOrientation = 0;
+  double? _screenOrientation = 0;
 
-  int _groupValue = 0;
+  int? _groupValue = 0;
 
   @override
   void initState() {
     super.initState();
-    motionSensors.gyroscope.listen((GyroscopeEvent event) {
+    motionSensors.gyroscope!.listen((GyroscopeEvent event) {
       setState(() {
         _gyroscope.setValues(event.x, event.y, event.z);
       });
     });
-    motionSensors.accelerometer.listen((AccelerometerEvent event) {
+    motionSensors.accelerometer!.listen((AccelerometerEvent event) {
       setState(() {
         _accelerometer.setValues(event.x, event.y, event.z);
       });
     });
-    motionSensors.userAccelerometer.listen((UserAccelerometerEvent event) {
+    motionSensors.userAccelerometer!.listen((UserAccelerometerEvent event) {
       setState(() {
         _userAaccelerometer.setValues(event.x, event.y, event.z);
       });
     });
-    motionSensors.magnetometer.listen((MagnetometerEvent event) {
+    motionSensors.magnetometer!.listen((MagnetometerEvent event) {
       setState(() {
         _magnetometer.setValues(event.x, event.y, event.z);
       });
     });
     motionSensors.isOrientationAvailable().then((available) {
-      if (available) {
-        motionSensors.orientation.listen((OrientationEvent event) {
+      if (available!) {
+        motionSensors.orientation!.listen((OrientationEvent event) {
           setState(() {
             _orientation.setValues(event.yaw, event.pitch, event.roll);
           });
         });
       }
     });
-    motionSensors.absoluteOrientation.listen((AbsoluteOrientationEvent event) {
+    motionSensors.absoluteOrientation!.listen((AbsoluteOrientationEvent event) {
       setState(() {
         _absoluteOrientation.setValues(event.yaw, event.pitch, event.roll);
       });
     });
-    motionSensors.screenOrientation.listen((ScreenOrientationEvent event) {
+    motionSensors.screenOrientation!.listen((ScreenOrientationEvent event) {
       setState(() {
         _screenOrientation = event.angle;
       });
     });
   }
 
-  void setUpdateInterval(int groupValue, int interval) {
+  void setUpdateInterval(int? groupValue, int interval) {
     motionSensors.accelerometerUpdateInterval = interval;
     motionSensors.userAccelerometerUpdateInterval = interval;
     motionSensors.gyroscopeUpdateInterval = interval;
@@ -95,19 +95,19 @@ class _MyAppState extends State<MyApp> {
                 Radio(
                   value: 1,
                   groupValue: _groupValue,
-                  onChanged: (value) => setUpdateInterval(value, Duration.microsecondsPerSecond ~/ 1),
+                  onChanged: (dynamic value) => setUpdateInterval(value, Duration.microsecondsPerSecond ~/ 1),
                 ),
                 Text("1 FPS"),
                 Radio(
                   value: 2,
                   groupValue: _groupValue,
-                  onChanged: (value) => setUpdateInterval(value, Duration.microsecondsPerSecond ~/ 30),
+                  onChanged: (dynamic value) => setUpdateInterval(value, Duration.microsecondsPerSecond ~/ 30),
                 ),
                 Text("30 FPS"),
                 Radio(
                   value: 3,
                   groupValue: _groupValue,
-                  onChanged: (value) => setUpdateInterval(value, Duration.microsecondsPerSecond ~/ 60),
+                  onChanged: (dynamic value) => setUpdateInterval(value, Duration.microsecondsPerSecond ~/ 60),
                 ),
                 Text("60 FPS"),
               ],
@@ -170,7 +170,7 @@ class _MyAppState extends State<MyApp> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: <Widget>[
-                Text('${_screenOrientation.toStringAsFixed(4)}'),
+                Text('${_screenOrientation!.toStringAsFixed(4)}'),
               ],
             ),
           ],
