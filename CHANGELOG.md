@@ -1,3 +1,7 @@
+## 0.1.0
+
+* migrate to null safety
+
 ## 0.0.5
 
 * fixed getOrientation return NaN value

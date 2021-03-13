@@ -201,28 +201,28 @@ class MotionSensors {
   static const int TYPE_ABSOLUTE_ORIENTATION = 11; //=TYPE_ROTATION_VECTOR
 
   /// Determines whether sensor is available.
-  Future<bool?> isSensorAvailable(int sensorType) async {
+  Future<bool> isSensorAvailable(int sensorType) async {
     final available = await _methodChannel.invokeMethod('isSensorAvailable', sensorType);
     return available;
   }
 
   /// Determines whether accelerometer is available.
-  Future<bool?> isAccelerometerAvailable() => isSensorAvailable(TYPE_ACCELEROMETER);
+  Future<bool> isAccelerometerAvailable() => isSensorAvailable(TYPE_ACCELEROMETER);
 
   /// Determines whether magnetometer is available.
-  Future<bool?> isMagnetometerAvailable() => isSensorAvailable(TYPE_MAGNETIC_FIELD);
+  Future<bool> isMagnetometerAvailable() => isSensorAvailable(TYPE_MAGNETIC_FIELD);
 
   /// Determines whether gyroscope is available.
-  Future<bool?> isGyroscopeAvailable() => isSensorAvailable(TYPE_GYROSCOPE);
+  Future<bool> isGyroscopeAvailable() => isSensorAvailable(TYPE_GYROSCOPE);
 
   /// Determines whether user accelerometer is available.
-  Future<bool?> isUserAccelerationAvailable() => isSensorAvailable(TYPE_USER_ACCELEROMETER);
+  Future<bool> isUserAccelerationAvailable() => isSensorAvailable(TYPE_USER_ACCELEROMETER);
 
   /// Determines whether orientation is available.
-  Future<bool?> isOrientationAvailable() => isSensorAvailable(TYPE_ORIENTATION);
+  Future<bool> isOrientationAvailable() => isSensorAvailable(TYPE_ORIENTATION);
 
   /// Determines whether absolute orientation is available.
-  Future<bool?> isAbsoluteOrientationAvailable() => isSensorAvailable(TYPE_ABSOLUTE_ORIENTATION);
+  Future<bool> isAbsoluteOrientationAvailable() => isSensorAvailable(TYPE_ABSOLUTE_ORIENTATION);
 
   /// Change the update interval of sensor. The units are in microseconds.
   Future setSensorUpdateInterval(int sensorType, int interval) async {
@@ -248,39 +248,39 @@ class MotionSensors {
   set absoluteOrientationUpdateInterval(int interval) => setSensorUpdateInterval(TYPE_ABSOLUTE_ORIENTATION, interval);
 
   /// A broadcast stream of events from the device accelerometer.
-  Stream<AccelerometerEvent>? get accelerometer {
+  Stream<AccelerometerEvent> get accelerometer {
     if (_accelerometerEvents == null) {
       _accelerometerEvents = _accelerometerEventChannel.receiveBroadcastStream().map((dynamic event) => AccelerometerEvent.fromList(event.cast<double>()));
     }
-    return _accelerometerEvents;
+    return _accelerometerEvents!;
   }
 
   /// A broadcast stream of events from the device gyroscope.
-  Stream<GyroscopeEvent>? get gyroscope {
+  Stream<GyroscopeEvent> get gyroscope {
     if (_gyroscopeEvents == null) {
       _gyroscopeEvents = _gyroscopeEventChannel.receiveBroadcastStream().map((dynamic event) => GyroscopeEvent.fromList(event.cast<double>()));
     }
-    return _gyroscopeEvents;
+    return _gyroscopeEvents!;
   }
 
   /// Events from the device accelerometer with gravity removed.
-  Stream<UserAccelerometerEvent>? get userAccelerometer {
+  Stream<UserAccelerometerEvent> get userAccelerometer {
     if (_userAccelerometerEvents == null) {
       _userAccelerometerEvents = _userAccelerometerEventChannel.receiveBroadcastStream().map((dynamic event) => UserAccelerometerEvent.fromList(event.cast<double>()));
     }
-    return _userAccelerometerEvents;
+    return _userAccelerometerEvents!;
   }
 
   /// A broadcast stream of events from the device magnetometer.
-  Stream<MagnetometerEvent>? get magnetometer {
+  Stream<MagnetometerEvent> get magnetometer {
     if (_magnetometerEvents == null) {
       _magnetometerEvents = _magnetometerEventChannel.receiveBroadcastStream().map((dynamic event) => MagnetometerEvent.fromList(event.cast<double>()));
     }
-    return _magnetometerEvents;
+    return _magnetometerEvents!;
   }
 
   /// The current orientation of the device.
-  Stream<OrientationEvent>? get orientation {
+  Stream<OrientationEvent> get orientation {
     if (_orientationEvents == null) {
       _orientationEvents = _orientationChannel.receiveBroadcastStream().map((dynamic event) {
         var orientation = OrientationEvent.fromList(event.cast<double>());
@@ -290,23 +290,23 @@ class MotionSensors {
         return OrientationEvent(yaw, orientation.pitch, orientation.roll);
       });
     }
-    return _orientationEvents;
+    return _orientationEvents!;
   }
 
   /// The current absolute orientation of the device.
-  Stream<AbsoluteOrientationEvent>? get absoluteOrientation {
+  Stream<AbsoluteOrientationEvent> get absoluteOrientation {
     if (_absoluteOrientationEvents == null) {
       _absoluteOrientationEvents = _absoluteOrientationChannel.receiveBroadcastStream().map((dynamic event) => AbsoluteOrientationEvent.fromList(event.cast<double>()));
     }
-    return _absoluteOrientationEvents;
+    return _absoluteOrientationEvents!;
   }
 
   /// The rotation of the screen from its "natural" orientation.
-  Stream<ScreenOrientationEvent>? get screenOrientation {
+  Stream<ScreenOrientationEvent> get screenOrientation {
     if (_screenOrientationEvents == null) {
       _screenOrientationEvents = _screenOrientationChannel.receiveBroadcastStream().map((dynamic event) => ScreenOrientationEvent(event as double?));
     }
-    return _screenOrientationEvents;
+    return _screenOrientationEvents!;
   }
 
   Matrix4 getRotationMatrix(Vector3 gravity, Vector3 geomagnetic) {
