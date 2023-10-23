@@ -1,3 +1,7 @@
+## 0.1.1
+
+* Add compatibility with AGP 8
+
 ## 0.1.0
 
 * migrate to null safety
